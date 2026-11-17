@@ -2,6 +2,8 @@
 
 This project implements and evaluates a C-MAPSS turbofan remaining-useful-life (RUL) predictor under three resource-placement scenarios: cloud-only, edge-only, and hybrid edge-cloud. The deployment scenarios reuse the same trained model and predictions, so differences in prediction accuracy are not attributed to placement.
 
+Authors: Muhammad Ayan Asif (22i-1097) and Ruhab Ahmad (23i-0559), FAST-NUCES Islamabad.
+
 The study is a reproducible software experiment, not a physical cloud/edge deployment. Network RTT, bandwidth, and edge compute scaling are scenario assumptions; only feature extraction and model execution time are locally microbenchmarked.
 
 ## Research question and contribution
