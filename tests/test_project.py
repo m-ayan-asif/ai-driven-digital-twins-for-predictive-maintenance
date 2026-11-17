@@ -7,6 +7,7 @@ import numpy as np
 
 from src.data_prep import FEATURE_COUNT, load_fd001, window_features
 from src.deployment_sim.simulator import load_scenarios, simulate_scenarios
+from src.metrics import rul_stratified_metrics
 
 
 def make_row(engine: int, cycle: int, value: float) -> list[float]:
@@ -45,6 +46,28 @@ class DataPrepTests(unittest.TestCase):
         self.assertEqual(dataset.test_windows.shape, (2, 3, 26))
         np.testing.assert_array_equal(dataset.y_test, [5, 9])
         self.assertEqual(float(dataset.y_train.max()), 2.0)
+
+
+class MetricsTests(unittest.TestCase):
+    def test_rul_stratification_uses_disjoint_inclusive_upper_bounds(self):
+        rows = rul_stratified_metrics(
+            truth=np.asarray([0, 30, 31, 60, 61, 90, 91]),
+            prediction=np.asarray([0, 29, 33, 60, 60, 88, 100]),
+            baseline_prediction=np.asarray([10, 10, 10, 10, 10, 10, 10]),
+        )
+        self.assertEqual(
+            [(row["rul_range"], row["engine_count"]) for row in rows],
+            [("0-30", 2), ("31-60", 2), ("61-90", 2), (">90", 1)],
+        )
+        self.assertAlmostEqual(rows[1]["rmse"], np.sqrt(2.0))
+
+    def test_rul_stratification_rejects_mismatched_arrays(self):
+        with self.assertRaises(ValueError):
+            rul_stratified_metrics(
+                np.asarray([10.0]),
+                np.asarray([11.0, 12.0]),
+                np.asarray([10.0]),
+            )
 
 
 class DeploymentTests(unittest.TestCase):

@@ -30,7 +30,9 @@ python -m venv .venv
 python -m pip install -r requirements-lock.txt
 python -m src.data_prep --input_dir data/raw --output_dir data/processed
 python -m experiments.run_all
+python -m experiments.rul_range_analysis
 python -m src.plot_results --input results/summary.csv --output-dir figures
+python -m src.plot_architecture
 python -m unittest discover -s tests -v
 ```
 
@@ -39,8 +41,10 @@ python -m unittest discover -s tests -v
 - `results/raw/model_runs.csv` — per-seed Random Forest and mean-only baseline metrics.
 - `results/raw/deployment_runs.csv` — per-seed deployment scenario metrics.
 - `results/summary.csv` — mean and standard deviation across the three model seeds.
+- `results/rul_range_runs.csv` and `results/rul_range_summary.csv` — actual test errors split into fixed official-label RUL ranges and repeated across the three model seeds.
 - `results/run_manifest.json` — dataset hashes, parameters, package versions, host information, and deployment assumptions.
 - `figures/deployment_tradeoffs.png` — simulated p95 latency and normalized resource-cost index.
+- `figures/deployment_architecture.png` — workflow and three placement scenarios used in the manuscript.
 
 The main entry points are `src/data_prep.py`, `src/models/rul_model.py`, `src/deployment_sim/simulator.py`, and `experiments/run_all.py`.
 
@@ -77,7 +81,7 @@ Three Random Forest seeds produced mean test RMSE `15.0266 ± 0.5049` cycles and
 
 Accuracy is identical across placement rows by design because each row reuses the same model predictions. Under the configured scenario assumptions, edge-only has the lowest simulated p95 latency; hybrid sends 90.83% fewer input bytes than cloud-only. The hybrid result retains the assumed cloud RTT, and its resource-cost index is only a normalized proxy. Neither result establishes real infrastructure performance or monetary savings.
 
-The IEEE conference manuscript is [`main.tex`](main.tex) and includes the result table and generated trade-off figure. All listed academic references in the manuscript are journal publications with DOIs.
+The IEEE conference manuscript is [`main.tex`](main.tex). It includes a comparison of the cited prior work, a scoped research-gap statement, the generated workflow/placement diagram, and the result table and trade-off figure. It cites 32 journal publications with DOI metadata. In the paper, black unbracketed accuracy and fit-time results are measured; red bracketed values are deployment scenario assumptions or simulator-derived estimates, not physical cloud/edge measurements.
 
 ## Repository
 

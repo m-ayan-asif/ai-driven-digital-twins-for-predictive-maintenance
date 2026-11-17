@@ -29,9 +29,31 @@ def plot_summary(summary_path: Path, output_dir: Path) -> Path:
     axes[0].bar(x, latency, yerr=latency_err, capsize=4, color="#4472C4")
     axes[0].set_ylabel("p95 latency (ms)")
     axes[0].set_title("Simulated response latency")
+    for index, value in enumerate(latency):
+        axes[0].text(
+            index,
+            value + latency_err[index] + 1.5,
+            f"[{value:.1f}]",
+            ha="center",
+            va="bottom",
+            color="#c00000",
+            fontsize=9,
+        )
+    axes[0].set_ylim(top=max(latency + latency_err) * 1.12)
     axes[1].bar(x, cost, yerr=cost_err, capsize=4, color="#70AD47")
     axes[1].set_ylabel("Normalized resource-cost index")
     axes[1].set_title("Modeled compute + transmission")
+    for index, value in enumerate(cost):
+        axes[1].text(
+            index,
+            value + cost_err[index] + 0.025,
+            f"[{value:.3f}]",
+            ha="center",
+            va="bottom",
+            color="#c00000",
+            fontsize=9,
+        )
+    axes[1].set_ylim(top=max(cost + cost_err) * 1.2)
     for axis in axes:
         axis.set_xticks(x, labels, rotation=15, ha="right")
         axis.grid(axis="y", alpha=0.25)
