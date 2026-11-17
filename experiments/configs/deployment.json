@@ -1,0 +1,27 @@
+{
+  "description": "Scenario assumptions for a single-request deployment simulation; these are not measured cloud or edge service levels.",
+  "bandwidth_mbps": 20.0,
+  "scenarios": [
+    {
+      "name": "cloud-only",
+      "placement": "cloud",
+      "rtt_ms": 80.0,
+      "bandwidth_mbps": 20.0,
+      "edge_compute_factor": 1.0
+    },
+    {
+      "name": "edge-only",
+      "placement": "edge",
+      "rtt_ms": 1.0,
+      "bandwidth_mbps": 20.0,
+      "edge_compute_factor": 2.0
+    },
+    {
+      "name": "hybrid-edge-cloud",
+      "placement": "hybrid",
+      "rtt_ms": 80.0,
+      "bandwidth_mbps": 20.0,
+      "edge_compute_factor": 2.0
+    }
+  ]
+}

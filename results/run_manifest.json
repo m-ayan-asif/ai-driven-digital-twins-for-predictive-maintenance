@@ -1,0 +1,61 @@
+{
+  "generated_utc": "2026-11-17T15:27:59.677241+00:00",
+  "dataset": "NASA C-MAPSS FD001",
+  "dataset_source": "https://phm-datasets.s3.amazonaws.com/NASA/6.+Turbofan+Engine+Degradation+Simulation+Data+Set.zip",
+  "input_sha256": {
+    "train_FD001.txt": "963b5e22825b34d8b21c69e1aeb4af3e647050eb672ee8834ba4b5d91d2de0f8",
+    "test_FD001.txt": "3cda7109ce17bafb5443f2ac926cfcf88154b941b8c4cf95eb55d1ddd6f52851",
+    "RUL_FD001.txt": "a19c8ec94931949d0485bdc35118206e9c81c4547b422efb9cf86f4ceddbceca"
+  },
+  "training_rows": 20631,
+  "test_engines": 100,
+  "feature_count": 66,
+  "window_size": 30,
+  "rul_cap_cycles": 125,
+  "seeds": [
+    13,
+    37,
+    42
+  ],
+  "random_forest": {
+    "trees": 100,
+    "max_depth": 16,
+    "min_samples_leaf": 2,
+    "max_features": 0.8
+  },
+  "deployment_config": "experiments/configs/deployment.json",
+  "deployment_config_sha256": "dfa9a9e1e5e122699e46cd98e72101da2da9222a63cb2dfba47bb6cff3b1af6f",
+  "scenario_assumptions": [
+    {
+      "name": "cloud-only",
+      "placement": "cloud",
+      "rtt_ms": 80.0,
+      "bandwidth_mbps": 20.0,
+      "edge_compute_factor": 1.0
+    },
+    {
+      "name": "edge-only",
+      "placement": "edge",
+      "rtt_ms": 1.0,
+      "bandwidth_mbps": 20.0,
+      "edge_compute_factor": 2.0
+    },
+    {
+      "name": "hybrid-edge-cloud",
+      "placement": "hybrid",
+      "rtt_ms": 80.0,
+      "bandwidth_mbps": 20.0,
+      "edge_compute_factor": 2.0
+    }
+  ],
+  "runtime": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "logical_cpu_count": 12,
+    "numpy": "2.5.5",
+    "scikit_learn": "1.9.1",
+    "matplotlib": "3.11.2"
+  },
+  "latency_note": "Scenario latency combines measured local feature/model time with configured network and edge-compute assumptions; it is not measured cloud or edge infrastructure latency."
+}

@@ -1,0 +1,102 @@
+﻿\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{url}
+\begin{document}
+
+\title{Resource-Aware Deployment Scenarios for an AI-Driven Digital Twin in Predictive Maintenance}
+
+\author{\IEEEauthorblockN{Ayan Asif and Ruhab Ahmad}
+\IEEEauthorblockA{FAST-NUCES, Islamabad, Pakistan}}
+
+\maketitle
+
+\begin{abstract}
+Digital-twin prognostics connect condition data, remaining-useful-life (RUL) estimates, and maintenance decisions, but deploying the same predictor at the cloud, edge, or across both changes communication and compute requirements. This paper presents a reproducible integration and evaluation of a Random Forest RUL baseline on NASA C-MAPSS FD001, with transparent cloud-only, edge-only, and hybrid resource scenarios. The predictor uses 30-cycle causal windows and 66 features, and is evaluated on 100 official test engines over three random seeds. Mean RMSE and MAE are 15.0266 $\pm$ 0.5049 and 11.8558 $\pm$ 0.4167 cycles, respectively. Because each placement reuses the same model, features, and predictions, predictive accuracy is identical across scenarios. Under explicitly assumed network conditions, simulated p95 latency is 111.3216 ms for cloud-only, 61.3393 ms for edge-only, and 110.3261 ms for hybrid placement. Hybrid placement reduces modeled input traffic by 90.83\% relative to cloud-only, while its resource-cost index is 0.5466. These are scenario results, not measurements of deployed cloud or edge infrastructure.
+\end{abstract}
+
+\begin{IEEEkeywords}
+digital twin, predictive maintenance, remaining useful life, C-MAPSS, edge computing, deployment scenarios
+\end{IEEEkeywords}
+
+\section{Introduction}
+Predictive maintenance (PdM) uses equipment condition information to anticipate degradation and plan maintenance. Digital-twin approaches provide a framework for connecting a physical asset with data, models, and prognostics; prior work has described digital-twin-driven prognostics and PHM architectures for complex equipment \cite{tao2018,toothman2023}. For an RUL predictor, however, where feature computation and inference run affects the communication load and response time as well as the resources used.
+
+This study asks how cloud-only, edge-only, and hybrid placement compare when the prediction pipeline and its outputs are held constant. Its contribution is deliberately limited: it documents a reproducible FD001 Random Forest baseline and evaluates its resource trade-offs under explicit, configurable deployment assumptions. It does not propose a new RUL model or claim a comprehensive deployment benchmark. The central result is that modeled placement affects latency and transmitted bytes, not predictive accuracy, when all scenarios use identical predictions.
+
+\section{Related Work}
+Digital twins have been applied to prognostics and health management (PHM), including frameworks that connect an asset representation with monitoring and prediction functions \cite{tao2018,toothman2023}. RUL estimation on C-MAPSS has also been studied using deep-learning approaches, including models evaluated on turbofan-engine data \cite{asif2022,aldulaimi2019}. The present work uses a Random Forest rather than proposing a competing deep architecture; those studies motivate the prognostic task, not a direct performance comparison.
+
+Cloud, fog, and edge computing offer alternative ways to distribute data processing and inference. Their broader convergence and system trade-offs are discussed in \cite{firouzi2022}, while edge-computing vision and challenges are reviewed in \cite{shi2016}. Here, the deployment alternatives are represented by a simple, auditable simulation rather than an empirical evaluation on physical infrastructure.
+
+\section{Methodology and Architecture}
+\subsection{Data and RUL prediction}
+The experiments use the official NASA C-MAPSS FD001 training, test, and RUL files, obtained from the NASA Prognostics Data Repository and its C-MAPSS archive \url{https://phm-datasets.s3.amazonaws.com/NASA/6.+Turbofan+Engine+Degradation+Simulation+Data+Set.zip}. Causal rolling windows produce 20,631 training examples. Each example uses a trailing 30-cycle window, with the three current-setting values and each of 21 sensors summarized by its window mean, standard deviation, and slope, yielding 66 features. Training RUL targets are capped at 125 cycles. For evaluation, the model predicts RUL for the final available window of each of the 100 official test engines using the corresponding official RUL labels.
+
+The predictor is a scikit-learn RandomForestRegressor with 100 trees, maximum depth 16, minimum leaf size 2, and 0.8 maximum feature fraction. Three runs use seeds 13, 37, and 42. A mean-only DummyRegressor is included as a weak reference baseline. RMSE and MAE are calculated in cycles for each run and then summarized across seeds.
+
+\subsection{Placement scenarios}
+All three scenarios use the same trained model, input features, and predictions. In cloud-only placement, the complete 2,880-byte window is transmitted to the cloud. In edge-only placement, feature computation and inference are local and no remote bytes are sent. In the hybrid scenario, edge processing computes the 66-feature vector, and the 264-byte feature payload is sent to the cloud for inference. Accordingly, placement cannot change the measured prediction metrics in this experiment.
+
+Scenario latency combines locally microbenchmarked feature/model execution times with configured network and edge-compute assumptions. The deployment configuration assumes 80 ms round-trip time (RTT) for cloud and hybrid, 1 ms RTT for edge, 20 Mbps bandwidth, and an edge compute multiplier of 2.0. Payload accounting assumes float32 input encoding, includes uplink input bytes only, and excludes the RUL response. Requests are evaluated independently; concurrent request queueing is not modeled. The cost measure is a dimensionless equal-weight index,
+\begin{equation}
+ C=\tfrac{1}{2}\left(\frac{t_{\mathrm{compute}}}{t_{\mathrm{compute,cloud}}}+\frac{b_{\mathrm{uplink}}}{b_{\mathrm{uplink,cloud}}}\right),
+\end{equation}
+where the cloud-only scenario is normalized to 1. This index is not a monetary or provider-billing estimate. Neither the network assumptions nor the computed end-to-end latencies represent a deployed cloud or edge service.
+
+\section{Implementation and Experiments}
+Data preparation, model settings, deployment assumptions, and dataset hashes are recorded in the project run manifest and experiment configuration. The implementation uses Python 3.14.6, NumPy 2.5.5, scikit-learn 1.9.1, and Matplotlib 3.11.2; the manifest records the host platform and processor. The three seeds provide repeated model runs; for each run, the official test engines are evaluated once, and the same result is associated with each placement scenario. Local feature and model execution times were microbenchmarked. Network delay, bandwidth transfer, and edge compute scaling were imposed by the scenario simulator. The reported standard deviations describe variation across the three model seeds, not repeated measurements of production infrastructure.
+
+\section{Results}
+Table~\ref{tab:results} summarizes the three-seed results. The RF achieves mean RMSE 15.0266 $\pm$ 0.5049 and MAE 11.8558 $\pm$ 0.4167 cycles. The mean-only baseline has RMSE 43.0670 and MAE 35.9000 in each seed. The accuracy measures are identical across placements because the same predictions are used in each scenario.
+
+\begin{table*}[t]
+\caption{FD001 prediction and simulated deployment results (mean $\pm$ standard deviation across three seeds where applicable).}
+\label{tab:results}
+\centering
+\scriptsize
+\begin{tabular}{lrrrrrr}
+\toprule
+Scenario & RMSE (cycles) & MAE (cycles) & p95 latency (ms) & Compute (ms) & Uplink (bytes) & Cost index \\
+\midrule
+Cloud-only & 15.0266 $\pm$ 0.5049 & 11.8558 $\pm$ 0.4167 & 111.3216 $\pm$ 0.4218 & 28.4776 & 2,880 & 1.0000 \\
+Edge-only & 15.0266 $\pm$ 0.5049 & 11.8558 $\pm$ 0.4167 & 61.3393 $\pm$ 0.8435 & 56.9552 & 0 & 1.0000 \\
+Hybrid edge--cloud & 15.0266 $\pm$ 0.5049 & 11.8558 $\pm$ 0.4167 & 110.3261 $\pm$ 0.4053 & 28.5206 & 264 & 0.5466 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Edge-only has the lowest simulated p95 latency because its assumed RTT is 1 ms, although its compute time is approximately twice the cloud compute time under the configured multiplier. Hybrid placement retains a cloud-scale simulated p95 latency because it retains the 80 ms cloud RTT, but reduces uplink payload from 2,880 to 264 bytes, a modeled reduction of 90.83\%. Under the stated equal-weight index, that payload reduction gives hybrid a resource-cost index of 0.5466; it should not be read as a dollar saving.
+
+Fig.~\ref{fig:tradeoffs} shows the generated deployment-tradeoff figure. Its latency and resource comparisons inherit the same simulation assumptions and do not establish real-world service-level performance.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/deployment_tradeoffs.png}
+\caption{Simulated p95 latency and normalized resource-cost index. Prediction accuracy is reported in Table~\ref{tab:results} and is shared across scenarios.}
+\label{fig:tradeoffs}
+\end{figure}
+
+\section{Discussion}
+The results separate the effect of placement from the effect of the prediction model. Under this controlled setup, placement changes modeled latency, compute allocation, and bytes sent, but not RMSE or MAE. Edge-only is the lowest-latency option under the assumed RTTs; hybrid exchanges a small feature payload for cloud inference and achieves substantially lower modeled traffic than cloud-only. The hybrid result does not imply a corresponding reduction in actual infrastructure costs, and the high cloud RTT dominates its simulated p95 latency. These findings support treating deployment choices as an explicit resource trade-off alongside model evaluation, not as evidence that a specific placement is universally preferable.
+
+\section{Limitations}
+This is a small-scope evaluation of FD001 only, using one Random Forest model and a weak mean-only baseline. The deployment network and edge-compute parameters are uncalibrated scenario assumptions, and no physical edge or cloud service was deployed. Local microbenchmarks are not representative of actual hardware in either environment. The study also does not evaluate model calibration, operational maintenance decisions, multiple fault regimes, or system behavior under concurrent requests. Its contribution is reproducible integration and transparent scenario analysis, not a comprehensive benchmark or a novel predictor.
+
+\section{Conclusion}
+A single FD001 Random Forest baseline produced mean RMSE 15.0266 and MAE 11.8558 cycles across three seeds. Reusing the same predictions across placement scenarios made accuracy invariant while the configured resource assumptions produced different simulated latency and traffic: edge-only was fastest, and hybrid reduced modeled uplink traffic by 90.83\% relative to cloud-only. These results are evidence about the stated scenario model only. Future work should evaluate all four C-MAPSS subsets, compare additional prognostic models, calibrate infrastructure parameters, and measure latency and billing on physical edge and cloud services before drawing operational or monetary conclusions.
+
+\section*{Reproducibility}
+Code, experiment configurations, raw result CSVs, and the run manifest are available at \url{https://github.com/m-ayan-asif/ai-driven-digital-twins-for-predictive-maintenance}.
+
+\begin{thebibliography}{6}
+\bibitem{tao2018} F. Tao, M. Zhang, Y. Liu, and A. Y. C. Nee, ``Digital twin driven prognostics and health management for complex equipment,'' \emph{CIRP Annals}, vol. 67, no. 1, pp. 169--172, 2018, doi: 10.1016/j.cirp.2018.04.055.
+\bibitem{toothman2023} M. Toothman, B. Braun, S. J. Bury, J. Moyne, D. M. Tilbury, Y. Ye, and K. Barton, ``A digital twin framework for prognostics and health management,'' \emph{Computers in Industry}, vol. 150, Art. no. 103948, 2023, doi: 10.1016/j.compind.2023.103948.
+\bibitem{asif2022} O. Asif, S. A. Haider, S. R. Naqvi, J. F. W. Zaki, K.-S. Kwak, and S. M. R. Islam, ``A deep learning model for remaining useful life prediction of aircraft turbofan engine on C-MAPSS dataset,'' \emph{IEEE Access}, vol. 10, pp. 95425--95440, 2022, doi: 10.1109/ACCESS.2022.3203406.
+\bibitem{aldulaimi2019} A. Al-Dulaimi, S. Zabihi, A. Asif, and A. Mohammadi, ``A multimodal and hybrid deep neural network model for remaining useful life estimation,'' \emph{Computers in Industry}, vol. 108, pp. 186--196, 2019, doi: 10.1016/j.compind.2019.02.004.
+\bibitem{firouzi2022} F. Firouzi, B. Farahani, and A. Marin\v{s}ek, ``The convergence and interplay of edge, fog, and cloud in the AI-driven Internet of Things (IoT),'' \emph{Information Systems}, vol. 107, Art. no. 101840, 2022, doi: 10.1016/j.is.2021.101840.
+\bibitem{shi2016} W. Shi, J. Cao, Q. Zhang, Y. Li, and L. Xu, ``Edge computing: Vision and challenges,'' \emph{IEEE Internet of Things Journal}, vol. 3, no. 5, pp. 637--646, 2016, doi: 10.1109/JIOT.2016.2579198.
+\end{thebibliography}
+
+\end{document}
